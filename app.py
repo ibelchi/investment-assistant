@@ -27,16 +27,19 @@ with tab_scanner:
     
     col1, col2 = st.columns([1, 4])
     with col1:
-        limit = st.number_input("Límit símbols (deixar 0 o buit per tot el S&P500)", min_value=0, max_value=505, value=10)
+        limit = st.number_input("Límit símbols (deixar 0 o buit per tot el S&P500)", min_value=0, max_value=505, value=0)
         start_btn = st.button("Executar Escàner", type="primary")
         
     with col2:
         if start_btn:
             with st.spinner("Escanejant el mercat i avaluant estratègies... Això pot trigar una mica."):
                 scanner = MarketScanner()
-                scanner.run_scan(limit_symbols=limit if limit > 0 else None)
-            st.success("Escaneig completat! Revisa l'Historial per veure si hi ha noves oportunitats detectades.")
-            st.balloons()
+                try:
+                    scanner.run_scan(limit_symbols=limit if limit > 0 else None)
+                    st.success("Escaneig completat! Revisa l'Historial per veure si hi ha noves oportunitats detectades.")
+                    st.balloons()
+                except Exception as e:
+                    st.error(f"⚠️ Error crític durant l'escaneig: {e}")
 
 # --- TAB HISTORY ---
 with tab_history:

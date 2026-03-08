@@ -23,7 +23,7 @@ class BuyTheDipStrategy(StrategyBase):
         Detecta accions que han caigut respecte al seu recent màxim però que
         ja han començat a rebotar des d'un mínim.
         """
-        p = self.default_parameters
+        p = self.default_parameters.copy()
         if config:
             p.update(config)
             
@@ -35,7 +35,7 @@ class BuyTheDipStrategy(StrategyBase):
         }
         
         if hist_data.empty or len(hist_data) < p["lookback_days"]:
-            result["reason"] = f"Manca dades històriques per a {symbol}"
+            result["reason"] = f"No hi ha prou dades històriques per analitzar {symbol}"
             return result
             
         current_price = hist_data['Close'].iloc[-1]
@@ -59,17 +59,24 @@ class BuyTheDipStrategy(StrategyBase):
         period_high = recent_data['High'].max()
         period_low = recent_data['Low'].min()
         
-        # Calcular devaluació des del màxim
-        drop_pct = ((period_high - period_low) / period_high) * 100
+        # Calcular devaluació des del màxim respecte al preu actual
+        drop_pct = ((period_high - current_price) / period_high) * 100
         
-        if drop_pct < p["min_drop_pct"]:
-            result["reason"] = f"No ha caigut prou ({drop_pct:.1f}% < {p['min_drop_pct']}%) des del recent màxim de ${period_high:.2f}."
-            return result
-            
         # 3. Calcular el rebot actual
         # Comprovem si des del fons (period_low) ha rebotat indicant inici de "recovery"
         rebound_pct = ((current_price - period_low) / period_low) * 100
         
+        result["metrics"] = {
+            "period_high": float(period_high),
+            "period_low": float(period_low),
+            "drop_pct": float(drop_pct),
+            "rebound_pct": float(rebound_pct)
+        }
+        
+        if drop_pct < p["min_drop_pct"]:
+            result["reason"] = f"No ha caigut prou des del màxim recent ({drop_pct:.1f}% < {p['min_drop_pct']}%). Màxim període: ${period_high:.2f}, preu actual: ${current_price:.2f}"
+            return result
+            
         if rebound_pct < p["min_rebound_pct"]:
             result["reason"] = f"No hi ha signe que la sagnia hagi acabat (rebut del {rebound_pct:.1f}% < {p['min_rebound_pct']}%)."
             return result

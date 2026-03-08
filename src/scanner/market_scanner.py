@@ -23,6 +23,9 @@ class MarketScanner:
         logger.info("Iniciant Market Scanner...")
         symbols = get_sp500_symbols()
         
+        if not symbols or len(symbols) == 0:
+            raise RuntimeError("L'escàner no ha estat capaç d'obtenir cap llistat base de símbols S&P500. Comproveu la vostra connexió a internet, dependències com `lxml`, o canvis estructurals a la pàgina de Wikipedia on s'extrauen.")
+            
         if limit_symbols:
             symbols = symbols[:limit_symbols]
             
